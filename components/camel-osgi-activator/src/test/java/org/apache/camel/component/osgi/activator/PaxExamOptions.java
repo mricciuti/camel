@@ -14,22 +14,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.apache.camel.itest.karaf.activator;
+package org.apache.camel.component.osgi.activator;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.karaf.options.LogLevelOption;
 import org.ops4j.pax.exam.options.DefaultCompositeOption;
+import org.ops4j.pax.tinybundles.core.TinyBundles;
 
 import static org.ops4j.pax.exam.CoreOptions.maven;
+import static org.ops4j.pax.exam.CoreOptions.streamBundle;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.configureConsole;
-import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.features;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.karafDistributionConfiguration;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.keepRuntimeFolder;
 import static org.ops4j.pax.exam.karaf.options.KarafDistributionOption.logLevel;
 
 public enum PaxExamOptions {
+    
     KARAF(
             karafDistributionConfiguration()
                 .frameworkUrl(
@@ -48,14 +54,18 @@ public enum PaxExamOptions {
             logLevel(LogLevelOption.LogLevel.INFO)
         ),
         CAMEL_CORE_OSGI(
-            features(
-                maven()
-                    .groupId("org.apache.camel.karaf")
-                    .artifactId("apache-camel")
-                    .type("xml")
-                    .classifier("features")
-                    .versionAsInProject(),
-                    "camel-core", "camel-core-osgi")
+                createStreamBundleOption("camel-core-engine.jar"),
+                createStreamBundleOption("camel-api.jar"),
+                createStreamBundleOption("camel-base.jar"),
+                createStreamBundleOption("camel-jaxp.jar"),
+                createStreamBundleOption("camel-management-api.jar"),
+                createStreamBundleOption("camel-support.jar"),
+                createStreamBundleOption("camel-util.jar"),
+                createStreamBundleOption("camel-util-json.jar"),
+                createStreamBundleOption("spi-annotations.jar"),
+                createStreamBundleOption("camel-timer.jar"),
+                createStreamBundleOption("camel-log.jar"),
+                createStreamBundleOption("camel-core-osgi.jar")        
         );
 
     private final Option[] options;
@@ -66,5 +76,22 @@ public enum PaxExamOptions {
 
     public Option option() {
         return new DefaultCompositeOption(options);
+    }
+    
+    public static Option createStreamBundleOption(String fileName) {
+        InputStream bundleInputStream = null;
+        try {
+            bundleInputStream = Files.newInputStream(
+                    Paths.get("target/test-bundles")
+                        .resolve(fileName));
+            
+        } catch (IOException e) {
+            throw new RuntimeException("Error resolving Bundle", e);
+        }
+        
+        return streamBundle(
+                    TinyBundles.bundle()
+                        .read(bundleInputStream)
+                        .build());
     }
 }

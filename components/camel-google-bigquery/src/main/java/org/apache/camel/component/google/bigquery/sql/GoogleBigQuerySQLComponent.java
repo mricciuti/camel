@@ -46,14 +46,15 @@ public class GoogleBigQuerySQLComponent extends DefaultComponent {
         }
 
         GoogleBigQuerySQLConfiguration configuration = new GoogleBigQuerySQLConfiguration();
-        setProperties(configuration, parameters);
         configuration.parseRemaining(remaining);
 
         if (configuration.getConnectionFactory() == null) {
             configuration.setConnectionFactory(getConnectionFactory());
         }
 
-        return new GoogleBigQuerySQLEndpoint(uri, this, configuration);
+        GoogleBigQuerySQLEndpoint endpoint = new GoogleBigQuerySQLEndpoint(uri, this, configuration);
+        setProperties(endpoint, parameters);
+        return endpoint;
     }
 
     public String getProjectId() {
